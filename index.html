@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grammar Checker (LanguageTool Local)</title>
+    <title>Grammar Checker (LanguageTool Docker)</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -24,7 +24,7 @@
 </head>
 <body>
 
-    <h2>Grammar Checker (Offline LanguageTool)</h2>
+    <h2>Grammar Checker (Offline LanguageTool Docker)</h2>
     
     <textarea id="inputText" placeholder="Enter text here..."></textarea>
     <br>
@@ -42,7 +42,8 @@
             }
 
             try {
-                const response = await fetch("http://127.0.0.1:8081/v2/check", {
+                // Call the LanguageTool Docker API directly
+                const response = await fetch("http://127.0.0.1:8010/v2/check", { // Update with your Docker container port
                     method: "POST",
                     headers: {
                         "Content-Type": "application/x-www-form-urlencoded"
@@ -51,21 +52,21 @@
                 });
 
                 const data = await response.json();
-                let correctedText = inputText;
+                let correctedText = inputText.split(""); // Convert string to array for safe modifications
 
-                // Apply corrections in reverse order to avoid shifting offsets
                 let matches = data.matches;
                 for (let i = matches.length - 1; i >= 0; i--) {
                     let match = matches[i];
-                    if (match.replacements.length > 0) {
-                        correctedText =
-                            correctedText.slice(0, match.offset) +
-                            match.replacements[0] +  // Apply the first suggested correction
-                            correctedText.slice(match.offset + match.length);
+
+                    // ✅ Ensure replacements exist and are strings
+                    let replacement = match.replacements.length > 0 ? match.replacements[0] : null;
+
+                    if (replacement) {
+                        correctedText.splice(match.offset, match.length, replacement);
                     }
                 }
 
-                document.getElementById("outputText").value = correctedText;
+                document.getElementById("outputText").value = correctedText.join(""); // Convert array back to string
             } catch (error) {
                 console.error("Error connecting to LanguageTool:", error);
                 alert("Error: Unable to connect to LanguageTool. Make sure the server is running.");
