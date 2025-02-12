@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grammar Checker</title>
+    <title>Grammar Checker (LanguageTool Local)</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -24,7 +24,7 @@
 </head>
 <body>
 
-    <h2>Grammar Checker</h2>
+    <h2>Grammar Checker (Offline LanguageTool)</h2>
     
     <textarea id="inputText" placeholder="Enter text here..."></textarea>
     <br>
@@ -41,10 +41,35 @@
                 return;
             }
 
-            const response = await fetch(`http://127.0.0.1:8000/check?text=${encodeURIComponent(inputText)}`);
-            const data = await response.json();
+            try {
+                const response = await fetch("http://127.0.0.1:8081/v2/check", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded"
+                    },
+                    body: `language=en-US&text=${encodeURIComponent(inputText)}`
+                });
 
-            document.getElementById("outputText").value = data.corrected;
+                const data = await response.json();
+                let correctedText = inputText;
+
+                // Apply corrections in reverse order to avoid shifting offsets
+                let matches = data.matches;
+                for (let i = matches.length - 1; i >= 0; i--) {
+                    let match = matches[i];
+                    if (match.replacements.length > 0) {
+                        correctedText =
+                            correctedText.slice(0, match.offset) +
+                            match.replacements[0] +  // Apply the first suggested correction
+                            correctedText.slice(match.offset + match.length);
+                    }
+                }
+
+                document.getElementById("outputText").value = correctedText;
+            } catch (error) {
+                console.error("Error connecting to LanguageTool:", error);
+                alert("Error: Unable to connect to LanguageTool. Make sure the server is running.");
+            }
         }
     </script>
 
