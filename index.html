@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grammar Checker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+        }
+        textarea {
+            width: 80%;
+            height: 100px;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Grammar Checker</h2>
+    
+    <textarea id="inputText" placeholder="Enter text here..."></textarea>
+    <br>
+    <button onclick="checkGrammar()">Check Grammar</button>
+    <br><br>
+    <textarea id="outputText" placeholder="Corrected text will appear here..." readonly></textarea>
+
+    <script>
+        async function checkGrammar() {
+            let inputText = document.getElementById("inputText").value;
+
+            if (!inputText.trim()) {
+                alert("Please enter some text.");
+                return;
+            }
+
+            const response = await fetch(`http://127.0.0.1:8000/check?text=${encodeURIComponent(inputText)}`);
+            const data = await response.json();
+
+            document.getElementById("outputText").value = data.corrected;
+        }
+    </script>
+
+</body>
+</html>
